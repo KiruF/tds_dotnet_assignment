@@ -1,8 +1,10 @@
 ﻿using CarParkAPI.Data;
+using CarParkAPI.Functions;
 using CarParkAPI.Models;
 using CarParkAPI.Models.DTOs;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using static CarParkAPI.Functions.ChargeCalculator;
 
 namespace CarParkAPI.Controllers
 {
@@ -20,14 +22,22 @@ namespace CarParkAPI.Controllers
         [HttpPost("/parking")]
         public async Task<ActionResult<ParkedVehicle_Dto>> PostParking([FromBody] VehicleParkRequest_Dto body)
         {
+            // Check whether is already parked.
             bool alreadyParked = await _context.Vehicles
                 .AnyAsync(v => v.Reg == body.VehicleReg);
 
             if (alreadyParked)
                 return BadRequest(new { message = $"Vehicle with registration: {body.VehicleReg} is already parked." });
 
-            // TODO validate registration
+            // Validate reg.
+            var inputReg = body.VehicleReg;
+            inputReg.ToUpper(System.Globalization.CultureInfo.CurrentCulture);
 
+            var validationResult = Validators.ValidateVehicleReg(inputReg);
+            if (!validationResult.IsValid)
+                return BadRequest(new { message = validationResult.Log });
+
+            // Find first available space.
             var nextFreeSpace = await _context.GetParkingSpacesOrdered()
                 .Where(ps => ps.ParkedVehicle == null)
                 .FirstOrDefaultAsync();
@@ -35,6 +45,7 @@ namespace CarParkAPI.Controllers
             if (nextFreeSpace == null)
                 return BadRequest(new { message = "No free parking spaces are currently available." });
 
+            // Update db.
             var vehicle = new Vehicle
             {
                 Reg = body.VehicleReg,
@@ -72,8 +83,14 @@ namespace CarParkAPI.Controllers
         [HttpPost("/parking/exit/{reg}")]
         public async Task<ActionResult<ParkingCharge_Dto>> PostParkingExit(string reg)
         {
-            // TODO validate reg
+            // Validate reg.
+            reg.ToUpper();
 
+            var validationResult = Validators.ValidateVehicleReg(reg);
+            if (!validationResult.IsValid)
+                return BadRequest(new { message = validationResult.Log });
+
+            // Try to find the vehicle.
             var vehicleToExit = await _context.Vehicles
                 .Include(v => v.ParkingSpace)
                 .FirstOrDefaultAsync(v => v.Reg == reg);
@@ -84,22 +101,23 @@ namespace CarParkAPI.Controllers
                     $"because it was never parked in the first place.");
             }
 
-            var space = vehicleToExit.ParkingSpace;
+            // Fetch pricing.
+            if (!_context.TryGetPricing(out var pricing))
+                return StatusCode(StatusCodes.Status500InternalServerError, "Can't retrieve pricing");
 
-            var timeOfExit = DateTime.Now;
+            // Charge.
+            if (!TryCharge(vehicleToExit, pricing, out ParkingCharge_Dto charge))
+                return StatusCode(StatusCodes.Status500InternalServerError, "Charge failed");
+
+            // Update db.
+            var space = vehicleToExit.ParkingSpace;
 
             _context.Vehicles.Remove(vehicleToExit);
             space.ParkedVehicle = null;
 
             await _context.SaveChangesAsync();
 
-            return Ok(new ParkingCharge_Dto
-            {
-                VehicleReg = vehicleToExit.Reg,
-                VehicleCharge = 500,
-                TimeIn = vehicleToExit.TimeIn,
-                TimeOut = timeOfExit
-            });
+            return Ok(charge);
         }
-    }    
+    }
 }

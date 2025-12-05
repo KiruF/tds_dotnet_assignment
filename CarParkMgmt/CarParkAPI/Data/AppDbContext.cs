@@ -1,10 +1,13 @@
 ﻿using CarParkAPI.Models;
 using Microsoft.EntityFrameworkCore;
+using static CarParkAPI.Models.VehicleTypeConverter;
 
 namespace CarParkAPI.Data
 {
     public class AppDbContext : DbContext
     {
+        Dictionary<VehicleType, double> _pricing;
+
         public AppDbContext(DbContextOptions<AppDbContext> options)
             : base(options)
         {
@@ -38,6 +41,25 @@ namespace CarParkAPI.Data
             modelBuilder.Entity<Vehicle>()
                 .HasIndex(v => v.Reg)
                 .IsUnique();
+        }
+
+        public bool TryGetPricing(out Dictionary<VehicleType, double> pricing)
+        {            
+            if (_pricing == null)
+            {
+                pricing = null!;
+
+                _pricing = new Dictionary<VehicleType, double>(Pricing.Count());
+                foreach (var price in Pricing)
+                {
+                    var vType = ToVehicleType(price.VehicleType);
+                    if (!_pricing.TryAdd(vType, price.PoundsPerMinute))
+                        return false;
+                }
+            }
+
+            pricing = _pricing;
+            return true;
         }
     }
 }

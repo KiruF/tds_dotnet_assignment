@@ -21,6 +21,5 @@ namespace CarParkAPI.Models
                 SpaceNumber = ParkingSpace.SpaceNumber,
                 TimeIn = TimeIn
             };
-
     }
 }

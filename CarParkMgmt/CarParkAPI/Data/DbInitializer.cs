@@ -1,4 +1,5 @@
 ﻿using CarParkAPI.Models;
+using static CarParkAPI.Data.ParkingSettings;
 
 namespace CarParkAPI.Data
 {
@@ -11,17 +12,18 @@ namespace CarParkAPI.Data
             // Seed pricing
             var pricing = new[]
             {
-                new VehiclePricing{ VehicleType= VehicleType.SmallCar, PoundsPerMinute=0.1 },
-                new VehiclePricing{ VehicleType = VehicleType.MediumCar, PoundsPerMinute =  0.2 },
-                new VehiclePricing{ VehicleType = VehicleType.LargeCar, PoundsPerMinute = 0.4 }
+                new VehiclePricing{ VehicleType= (int)VehicleType.SmallCar, PoundsPerMinute=0.1 },
+                new VehiclePricing{ VehicleType = (int)VehicleType.MediumCar, PoundsPerMinute =  0.2 },
+                new VehiclePricing{ VehicleType = (int)VehicleType.LargeCar, PoundsPerMinute = 0.4 }
             };
             context.Pricing.AddRange(pricing);
 
-            // Seed parking spaces
-            //TODO: fetch from somewhere
-            int parkingSpacesCount = 10;
-            double freeSpacesChance = 0.5;
+            // Seed parking spaces            
+            int parkingSpacesCount = ParkingSpacesCount;
+            double freeSpacesChance = DBInit_FreeSpaceChanceCoeff;
+
             var rnd = new Random();
+
             var parkingSpaces = new ParkingSpace[parkingSpacesCount];
             var vehicles = new List<Vehicle>(parkingSpacesCount);
             for (int i = 0; i < parkingSpacesCount; i++)
@@ -33,10 +35,12 @@ namespace CarParkAPI.Data
                 {
                     DateTime yesterday = DateTime.Today.AddDays(-1);
 
+                    var fakeReg = $"HELLO{i}";
+
                     var vehicle = new Vehicle
                     {
                         VehicleType = VehicleType.MediumCar,
-                        Reg = $"Hello{i}",
+                        Reg = fakeReg,
                         TimeIn = yesterday,
                         ParkingSpace = pSpace
                     };
