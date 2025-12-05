@@ -23,6 +23,7 @@ namespace CarParkAPI.Data
             double freeSpacesChance = 0.5;
             var rnd = new Random();
             var parkingSpaces = new ParkingSpace[parkingSpacesCount];
+            var vehicles = new List<Vehicle>(parkingSpacesCount);
             for (int i = 0; i < parkingSpacesCount; i++)
             {
                 var pSpace = new ParkingSpace { SpaceNumber = i };
@@ -37,15 +38,19 @@ namespace CarParkAPI.Data
                         VehicleType = VehicleType.MediumCar,
                         Reg = $"Hello{i}",
                         TimeIn = yesterday,
-                        ParkedIn = pSpace
+                        ParkingSpace = pSpace
                     };
 
+                    vehicles.Add(vehicle);
                     pSpace.ParkedVehicle = vehicle;
                 }
 
                 parkingSpaces[i] = pSpace;
             }
             context.ParkingSpaces.AddRange(parkingSpaces);
+
+            if (vehicles.Count != 0)
+                context.Vehicles.AddRange(vehicles);
 
             context.SaveChanges();
         }

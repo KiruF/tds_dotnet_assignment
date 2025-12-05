@@ -7,8 +7,5 @@ namespace CarParkAPI.Models
 
         public int SpaceNumber { get; set; }
         public Vehicle? ParkedVehicle { get; set; }
-
-        public bool IsOccupied
-            => ParkedVehicle != null;
     }
 }

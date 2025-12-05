@@ -11,7 +11,13 @@ namespace CarParkAPI.Data
         }
 
         public DbSet<ParkingSpace> ParkingSpaces { get; set; }
+        public DbSet<Vehicle> Vehicles { get; set; }
         public DbSet<VehiclePricing> Pricing { get; set; }
+
+        public IQueryable<ParkingSpace> GetParkingSpacesOrdered()
+            => ParkingSpaces
+            .Include(ps => ps.ParkedVehicle)
+            .OrderBy(ps => ps.SpaceNumber);
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -20,8 +26,8 @@ namespace CarParkAPI.Data
             // ParkingSpace is principal, Vehicle is dependent
             modelBuilder.Entity<ParkingSpace>()
                 .HasOne(p => p.ParkedVehicle)
-                .WithOne(v => v.ParkedIn)
-                .HasForeignKey<Vehicle>(v => v.ParkedInID);
+                .WithOne(v => v.ParkingSpace)
+                .HasForeignKey<Vehicle>(v => v.ParkingSpaceID);
 
             // ParkingSpace indexing by SpaceNumber
             modelBuilder.Entity<ParkingSpace>()
