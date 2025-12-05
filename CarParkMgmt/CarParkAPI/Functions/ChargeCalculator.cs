@@ -17,6 +17,9 @@ namespace CarParkAPI.Functions
             if (!pricing.TryGetValue(vehicle.VehicleType, out var poundsPerMinute))
                 return false;
 
+            if (poundsPerMinute < 0)
+                return false;
+
             var minutesSpent = (timeOut - vehicle.TimeIn).TotalMinutes;
             var additionalChargeCount = Math.Floor(
                 minutesSpent / AdditionalCharge_TimeSpanMinutes);
