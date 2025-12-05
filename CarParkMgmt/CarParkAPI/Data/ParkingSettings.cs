@@ -13,6 +13,7 @@ namespace CarParkAPI.Data
             var section = configuration.GetSection(nameof(ParkingSettings));
 
             ParkingSpacesCount = section.GetValue<int>(nameof(ParkingSpacesCount));
+            DBInit_FreeSpaceChanceCoeff = section.GetValue<double>(nameof(DBInit_FreeSpaceChanceCoeff));
             AdditionalCharge_TimeSpanMinutes = section.GetValue<int>(nameof(AdditionalCharge_TimeSpanMinutes));
             AdditionalCharge_PricePounds = section.GetValue<double>(nameof(AdditionalCharge_PricePounds));
         }

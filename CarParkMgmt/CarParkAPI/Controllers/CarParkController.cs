@@ -86,24 +86,24 @@ namespace CarParkAPI.Controllers
             return Ok(response);
         }
 
-        [HttpPost("/parking/exit/{reg}")]
-        public async Task<ActionResult<ParkingCharge_Dto>> PostParkingExit(string reg)
+        [HttpPost("/parking/exit/{vehicalReg}")]
+        public async Task<ActionResult<ParkingCharge_Dto>> PostParkingExit(string vehicalReg)
         {
             // Validate reg.
-            var validationResult = Validators.ValidateVehicleReg(reg);
+            var validationResult = Validators.ValidateVehicleReg(vehicalReg);
             if (!validationResult.IsValid)
                 return BadRequest(new { message = validationResult.Log });
 
-            reg.ToUpper();
+            vehicalReg.ToUpper();
 
             // Try to find the vehicle.
             var vehicleToExit = await _context.Vehicles
                 .Include(v => v.ParkingSpace)
-                .FirstOrDefaultAsync(v => v.Reg == reg);
+                .FirstOrDefaultAsync(v => v.Reg == vehicalReg);
 
             if (vehicleToExit == null)
             {
-                return NotFound($"Vehicle with registration: {reg}, can't exit, " +
+                return NotFound($"Vehicle with registration: {vehicalReg}, can't exit, " +
                     $"because it was never parked in the first place.");
             }
 
