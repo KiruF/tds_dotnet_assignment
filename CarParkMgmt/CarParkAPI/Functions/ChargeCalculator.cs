@@ -21,9 +21,10 @@ namespace CarParkAPI.Functions
             var additionalChargeCount = Math.Floor(
                 minutesSpent / AdditionalCharge_TimeSpanMinutes);
 
-            var poundsCharged =
+            var poundsCharged = Math.Round(
                 minutesSpent * poundsPerMinute +
-                additionalChargeCount * AdditionalCharge_PricePounds;
+                additionalChargeCount * AdditionalCharge_PricePounds
+                , 2);
 
             charge = new ParkingCharge_Dto
             {

@@ -22,20 +22,26 @@ namespace CarParkAPI.Controllers
         [HttpPost("/parking")]
         public async Task<ActionResult<ParkedVehicle_Dto>> PostParking([FromBody] VehicleParkRequest_Dto body)
         {
+            // Validate reg.
+            var inputReg = body.VehicleReg;
+
+            var validationResult = Validators.ValidateVehicleReg(inputReg);
+            if (!validationResult.IsValid)
+                return BadRequest(new { message = validationResult.Log });
+
+            inputReg.ToUpper(System.Globalization.CultureInfo.CurrentCulture);
+
+            // Validate type, using the variable from above
+            validationResult = Validators.ValidateVehicleType(body.VehicleType, out VehicleType vType);
+            if (!validationResult.IsValid)
+                return BadRequest(new { message = validationResult.Log });
+
             // Check whether is already parked.
             bool alreadyParked = await _context.Vehicles
                 .AnyAsync(v => v.Reg == body.VehicleReg);
 
             if (alreadyParked)
                 return BadRequest(new { message = $"Vehicle with registration: {body.VehicleReg} is already parked." });
-
-            // Validate reg.
-            var inputReg = body.VehicleReg;
-            inputReg.ToUpper(System.Globalization.CultureInfo.CurrentCulture);
-
-            var validationResult = Validators.ValidateVehicleReg(inputReg);
-            if (!validationResult.IsValid)
-                return BadRequest(new { message = validationResult.Log });
 
             // Find first available space.
             var nextFreeSpace = await _context.GetParkingSpacesOrdered()
@@ -84,11 +90,11 @@ namespace CarParkAPI.Controllers
         public async Task<ActionResult<ParkingCharge_Dto>> PostParkingExit(string reg)
         {
             // Validate reg.
-            reg.ToUpper();
-
             var validationResult = Validators.ValidateVehicleReg(reg);
             if (!validationResult.IsValid)
                 return BadRequest(new { message = validationResult.Log });
+
+            reg.ToUpper();
 
             // Try to find the vehicle.
             var vehicleToExit = await _context.Vehicles

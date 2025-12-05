@@ -44,7 +44,7 @@ namespace CarParkAPI.Data
         }
 
         public bool TryGetPricing(out Dictionary<VehicleType, double> pricing)
-        {            
+        {
             if (_pricing == null)
             {
                 pricing = null!;
